@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ゆなのアイドル手帳</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ffe0f0 0%, #fff0fb 25%, #e8f0ff 50%, #fff0e8 75%, #f0ffe8 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 8s ease infinite;
+      display: flex; justify-content: center; align-items: flex-start;
+      padding: 30px 16px 60px;
+    }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .container { width: 100%; max-width: 560px; }
+    .header { text-align: center; margin-bottom: 28px; }
+    .header .crown { font-size: 2.4rem; display: block; margin-bottom: 4px; animation: bounce 1.8s ease infinite; }
+    @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .header h1 {
+      font-size: 2rem; font-weight: 900;
+      background: linear-gradient(90deg,#ff6eb4,#ff9de2,#c084fc,#60a5fa,#34d399,#facc15,#fb923c,#ff6eb4);
+      background-size: 200%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      animation: rainbowText 4s linear infinite; letter-spacing: 0.05em;
+    }
+    @keyframes rainbowText { 0%{background-position:0%} 100%{background-position:200%} }
+    .header .date { margin-top:6px; font-size:0.9rem; color:#e879a0; font-weight:700; letter-spacing:0.08em; }
+    .header .tagline { margin-top:4px; font-size:0.78rem; color:#c084fc; letter-spacing:0.06em; }
+    .card {
+      background: rgba(255,255,255,0.82); backdrop-filter: blur(12px);
+      border-radius: 24px; padding: 24px 22px 20px; margin-bottom: 20px;
+      box-shadow: 0 4px 24px rgba(255,150,200,0.25);
+      border: 2px solid transparent; background-clip: padding-box;
+      position: relative; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card::before {
+      content:''; position:absolute; inset:-2px; border-radius:26px;
+      background:linear-gradient(135deg,#ff9de2,#c084fc,#60a5fa,#34d399,#facc15,#fb923c);
+      z-index:-1; opacity:0.6;
+    }
+    .card:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(255,150,200,0.35); }
+    .card-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .card-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; box-shadow:0 2px 10px rgba(0,0,0,0.12); }
+    .icon-dance { background:linear-gradient(135deg,#ff6eb4,#ff9de2); }
+    .icon-song  { background:linear-gradient(135deg,#a78bfa,#c084fc); }
+    .icon-ganba { background:linear-gradient(135deg,#facc15,#fb923c); }
+    .card-header h2 { font-size:1.05rem; font-weight:900; color:#be185d; }
+    .card-header .sub { font-size:0.72rem; color:#9ca3af; margin-top:1px; }
+    textarea {
+      width:100%; min-height:110px; border:2px solid #fce7f3; border-radius:14px; padding:12px 14px;
+      font-family:inherit; font-size:0.92rem; line-height:1.7; color:#4b1c40;
+      background:#fff9fc; resize:vertical; outline:none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea::placeholder { color:#f9a8d4; }
+    textarea:focus { border-color:#f472b6; box-shadow:0 0 0 3px rgba(244,114,182,0.2); background:#fff; }
+    .char-count { text-align:right; font-size:0.7rem; color:#d1d5db; margin-top:5px; }
+    .save-btn {
+      width:100%; padding:16px; border:none; border-radius:50px; cursor:pointer;
+      font-family:inherit; font-size:1.1rem; font-weight:900; letter-spacing:0.12em; color:#fff;
+      background:linear-gradient(90deg,#ff6eb4,#e879f9,#818cf8,#38bdf8,#34d399,#facc15,#fb923c,#ff6eb4);
+      background-size:300%; animation:rainbowBtn 5s linear infinite;
+      box-shadow:0 4px 20px rgba(255,110,180,0.45); transition:transform 0.15s, box-shadow 0.15s;
+    }
+    @keyframes rainbowBtn { 0%{background-position:0%} 100%{background-position:300%} }
+    .save-btn:hover { transform:scale(1.03); box-shadow:0 6px 28px rgba(255,110,180,0.55); }
+    .save-btn:active { transform:scale(0.98); }
+    .toast {
+      position:fixed; bottom:30px; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:linear-gradient(135deg,#ff6eb4,#c084fc);
+      color:#fff; padding:14px 28px; border-radius:50px;
+      font-size:0.95rem; font-weight:700; box-shadow:0 6px 24px rgba(255,110,180,0.5);
+      transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s;
+      opacity:0; z-index:999; white-space:nowrap; letter-spacing:0.06em;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    .saved-entries { background:rgba(255,255,255,0.75); backdrop-filter:blur(10px); border-radius:22px; padding:20px 22px; border:2px dashed #f9a8d4; display:none; }
+    .saved-entries.visible { display:block; }
+    .saved-entries h3 { font-size:0.95rem; font-weight:900; color:#be185d; margin-bottom:14px; }
+    .entry-item { background:#fff0f8; border-radius:12px; padding:10px 14px; margin-bottom:10px; border-left:4px solid; }
+    .entry-item.dance { border-color:#ff6eb4; } .entry-item.song { border-color:#a78bfa; } .entry-item.ganba { border-color:#facc15; }
+    .entry-item .entry-label { font-size:0.7rem; font-weight:700; color:#9ca3af; margin-bottom:4px; }
+    .entry-item .entry-text  { font-size:0.88rem; color:#4b1c40; white-space:pre-wrap; line-height:1.6; }
+    .entry-date { font-size:0.7rem; color:#d1d5db; text-align:right; margin-top:12px; }
+    .sparkles { text-align:center; font-size:1rem; margin:10px 0 4px; letter-spacing:4px; opacity:0.7; }
+    .footer { text-align:center; margin-top:24px; font-size:0.72rem; color:#f9a8d4; letter-spacing:0.1em; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="crown">&#x1F451;</span>
+      <h1>ゆなのアイドル手帳</h1>
+      <div class="date" id="today-date"></div>
+      <div class="tagline">&#x2728; 夢に向かって、今日も全力で！ &#x2728;</div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-dance">&#x1F483;</div>
+        <div><h2>ダンス練習メモ</h2><div class="sub">今日のダンスはどうだった？</div></div>
+      </div>
+      <textarea id="dance-input" maxlength="500" placeholder="例：今日はサビのターンを10回練習したよ！だいぶキレイに回れるようになってきた&#x1F495;"></textarea>
+      <div class="char-count"><span id="dance-count">0</span> / 500</div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-song">&#x1F3A4;</div>
+        <div><h2>歌の練習メモ</h2><div class="sub">歌ってみてどうだった？</div></div>
+      </div>
+      <textarea id="song-input" maxlength="500" placeholder="例：高音部分が難しかった…でも最後は気持ちよく出せた！明日も練習する&#x1F3B5;"></textarea>
+      <div class="char-count"><span id="song-count">0</span> / 500</div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-ganba">&#x2B50;</div>
+        <div><h2>今日がんばったこと</h2><div class="sub">自分をほめてあげよう！</div></div>
+      </div>
+      <textarea id="ganba-input" maxlength="500" placeholder="例：疲れてたけど練習休まなかった！それだけで今日のゆなは100点満点&#x1F31F;"></textarea>
+      <div class="char-count"><span id="ganba-count">0</span> / 500</div>
+    </div>
+    <button class="save-btn" onclick="saveEntry()">&#x1F4BE; 今日の記録を保存する&#x2728;</button>
+    <div class="sparkles">&#x1F308; &#x2B50; &#x1F496; &#x2B50; &#x1F308;</div>
+    <div class="saved-entries" id="saved-entries">
+      <h3>&#x1F4D6; 保存した記録</h3>
+      <div id="entries-list"></div>
+    </div>
+    <div class="footer">ゆなのアイドル手帳 &#x1F338; がんばれ、未来のトップアイドル！</div>
+  </div>
+  <div class="toast" id="toast">&#x1F496; 記録を保存したよ！すごい！</div>
+  <script>
+    (function(){
+      const now=new Date(), days=['日','月','火','水','木','金','土'];
+      document.getElementById('today-date').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日（'+days[now.getDay()]+'）';
+    })();
+    ['dance','song','ganba'].forEach(function(k){
+      document.getElementById(k+'-input').addEventListener('input',function(){
+        document.getElementById(k+'-count').textContent=this.value.length;
+      });
+    });
+    function loadEntries(){var r=localStorage.getItem('yuna_idol_entries');return r?JSON.parse(r):[];}
+    function saveAllEntries(e){localStorage.setItem('yuna_idol_entries',JSON.stringify(e));}
+    function saveEntry(){
+      var dance=document.getElementById('dance-input').value.trim();
+      var song=document.getElementById('song-input').value.trim();
+      var ganba=document.getElementById('ganba-input').value.trim();
+      if(!dance&&!song&&!ganba){showToast('何か書いてから保存してね\uD83D\uDC95','#f472b6');return;}
+      var now=new Date();
+      var d=now.getFullYear()+'/'+(now.getMonth()+1)+'/'+now.getDate()+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      var entries=loadEntries();entries.unshift({date:d,dance:dance,song:song,ganba:ganba});
+      saveAllEntries(entries);renderEntries();
+      document.getElementById('dance-input').value='';
+      document.getElementById('song-input').value='';
+      document.getElementById('ganba-input').value='';
+      ['dance-count','song-count','ganba-count'].forEach(function(id){document.getElementById(id).textContent='0';});
+      showToast('\uD83D\uDC96 記録を保存したよ！すごい！');
+    }
+    function showToast(msg,color){
+      var t=document.getElementById('toast');t.textContent=msg;
+      t.style.background=color||'linear-gradient(135deg,#ff6eb4,#c084fc)';
+      t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2800);
+    }
+    function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function renderEntries(){
+      var entries=loadEntries(), container=document.getElementById('saved-entries'), list=document.getElementById('entries-list');
+      if(!entries.length){container.classList.remove('visible');return;}
+      container.classList.add('visible');list.innerHTML='';
+      entries.slice(0,20).forEach(function(e){
+        var b=document.createElement('div');b.style.marginBottom='16px';
+        var h='';
+        if(e.dance)h+='<div class="entry-item dance"><div class="entry-label">\uD83D\uDC83 ダンス練習</div><div class="entry-text">'+esc(e.dance)+'</div></div>';
+        if(e.song) h+='<div class="entry-item song"><div class="entry-label">\uD83C\uDFA4 歌の練習</div><div class="entry-text">'+esc(e.song)+'</div></div>';
+        if(e.ganba)h+='<div class="entry-item ganba"><div class="entry-label">\u2B50 今日がんばったこと</div><div class="entry-text">'+esc(e.ganba)+'</div></div>';
+        h+='<div class="entry-date">'+e.date+'</div>';
+        b.innerHTML=h;list.appendChild(b);
+      });
+    }
+    renderEntries();
+  </script>
+</body>
+</html>
